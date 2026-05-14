@@ -1,0 +1,9 @@
+{
+    "python.defaultInterpreterPath": "",
+    "css.lint.unknownAtRules": "ignore",
+    "C_Cpp.errorSquiggles": "disabled",
+    "clangd.fallbackFlags": [
+        "-x",
+        "c++"
+    ]
+}
