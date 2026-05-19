@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
-// Backend API URL - hanya dipakai untuk mock simulation & alarm control
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Di Vercel, frontend dan backend ada di domain yang sama.
+// Jadi di production kita biarkan kosong agar URL-nya relatif (mengikuti domain saat ini).
+const isProd = import.meta.env.PROD;
+const API_BASE_URL = import.meta.env.VITE_API_URL || (isProd ? '' : 'http://localhost:8000');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
