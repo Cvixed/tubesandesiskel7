@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import StatusCard from './components/StatusCard';
 import HistoryTable from './components/HistoryTable';
-import MockToggle from './components/MockToggle';
 import { fetchStatus, fetchHistory } from './services/api';
 
 function App() {
@@ -41,10 +40,7 @@ function App() {
       <Header />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Toolbar: Mock Toggle */}
-        <div className="flex justify-end mb-6">
-          <MockToggle />
-        </div>
+        {/* Toolbar: Hilang, tidak butuh mock toggle lagi */}
 
         {error && (
           <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
