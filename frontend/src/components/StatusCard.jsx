@@ -53,7 +53,7 @@ const StatusCard = ({ status }) => {
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl shadow-xl transition-all duration-500 p-8 ${getBgColor(warna)}`}>
+    <div className={`relative overflow-hidden rounded-3xl shadow-xl transition-all duration-500 p-8 h-full flex flex-col justify-center ${getBgColor(warna)}`}>
       <div className="absolute -top-10 -right-10 opacity-20 transform rotate-12 scale-150">
         {getIcon(cuaca)}
       </div>

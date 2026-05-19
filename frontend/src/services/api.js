@@ -10,19 +10,19 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Helper untuk format waktu ke WIB (Waktu Indonesia Barat)
+// Helper untuk format waktu sesuai dengan Timezone otomatis dari Browser/Perangkat
 const formatWaktu = (isoString) => {
   if (!isoString || isoString === '-') return '-';
   const date = new Date(isoString);
   return new Intl.DateTimeFormat('id-ID', {
-    timeZone: 'Asia/Jakarta',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-  }).format(date) + ' WIB';
+    timeZoneName: 'short'
+  }).format(date);
 };
 
 // ─── Dashboard Endpoints (langsung ke Supabase) ───────────────
@@ -69,6 +69,7 @@ export const fetchHistory = async () => {
   return data.map((row) => ({
     id_riwayat: row.id_riwayat,
     nilai_analog_sensor: row.nilai_analog_sensor,
+    waktu_iso: row.waktu_kejadian,
     waktu_kejadian: formatWaktu(row.waktu_kejadian),
     nama_kondisi: row.status_cuaca?.nama_kondisi || '-',
     kode_warna: row.status_cuaca?.kode_warna || 'Abu-abu',

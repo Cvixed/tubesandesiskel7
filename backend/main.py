@@ -26,6 +26,10 @@ SUPABASE_HEADERS = {
     "Prefer": "return=representation"
 }
 
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
 # Base REST URL untuk PostgREST
 REST_URL = f"{SUPABASE_URL}/rest/v1"
 
@@ -74,6 +78,27 @@ def db_select(table: str, select: str = "*", order: str = None, limit: int = Non
     response.raise_for_status()
     return response.json()
 
+def send_telegram_alert(message: str):
+    """Mengirim pesan notifikasi ke Telegram"""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("[Telegram] Bot token atau Chat ID tidak diatur, melewati notifikasi.")
+        return
+        
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+    
+    try:
+        # Kirim secara asynchronous fire-and-forget (atau dalam thread terpisah)
+        # Di sini kita gunakan sinkronisasi sederhana untuk kemudahan karena ini contoh lokal
+        threading.Thread(target=lambda: httpx.post(url, json=payload), daemon=True).start()
+        print(f"[Telegram] Notifikasi dikirim: {message}")
+    except Exception as e:
+        print(f"[Telegram] Error: {e}")
+
 # ============================================================
 # SENSOR DATA PROCESSING
 # ============================================================
@@ -104,11 +129,14 @@ def process_sensor_value(value: int, device_id: int = 1):
         except Exception as e:
             print(f"[DB] Error inserting data: {e}")
 
-        # Alarm Logic - simpan command untuk Arduino
+        # Alarm Logic - simpan command untuk Arduino & Kirim Notif Telegram
         if new_status == 3:
             pending_commands[device_id] = "ALARM_ON"
+            if current_status_id != 3: # Hanya kirim jika sebelumnya bukan hujan
+                send_telegram_alert("⚠️ <b>PERINGATAN JEMURAN!</b> ⚠️\n\nHujan terdeteksi oleh sensor. Segera angkat jemuran Anda sekarang!")
         elif current_status_id == 3 and new_status in [1, 2]:
             pending_commands[device_id] = "ALARM_OFF"
+            send_telegram_alert("✅ <b>Hujan Berhenti</b>\n\nCuaca kembali membaik (Cerah/Gerimis). Alarm telah dimatikan otomatis.")
 
         current_status_id = new_status
 
