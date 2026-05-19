@@ -10,6 +10,21 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
+// Helper untuk format waktu ke WIB (Waktu Indonesia Barat)
+const formatWaktu = (isoString) => {
+  if (!isoString || isoString === '-') return '-';
+  const date = new Date(isoString);
+  return new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(date) + ' WIB';
+};
+
 // ─── Dashboard Endpoints (langsung ke Supabase) ───────────────
 
 export const fetchStatus = async () => {
@@ -37,7 +52,7 @@ export const fetchStatus = async () => {
     cuaca: statusCuaca.nama_kondisi || '-',
     warna: statusCuaca.kode_warna || 'Abu-abu',
     pesan_peringatan: pesan,
-    waktu_update: data.waktu_kejadian || '-',
+    waktu_update: formatWaktu(data.waktu_kejadian),
     nilai_sensor: data.nilai_analog_sensor || 0,
   };
 };
@@ -54,7 +69,7 @@ export const fetchHistory = async () => {
   return data.map((row) => ({
     id_riwayat: row.id_riwayat,
     nilai_analog_sensor: row.nilai_analog_sensor,
-    waktu_kejadian: row.waktu_kejadian,
+    waktu_kejadian: formatWaktu(row.waktu_kejadian),
     nama_kondisi: row.status_cuaca?.nama_kondisi || '-',
     kode_warna: row.status_cuaca?.kode_warna || 'Abu-abu',
   }));
