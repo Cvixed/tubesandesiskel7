@@ -22,15 +22,15 @@ function App() {
         setError(null);
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        setError('Gagal terhubung ke server. Pastikan backend FastAPI sedang berjalan.');
+        setError('Gagal mengambil data dari database. Periksa koneksi internet Anda.');
       }
     };
 
     // Initial load
     loadData();
 
-    // Polling every 2 seconds
-    const intervalId = setInterval(loadData, 2000);
+    // Polling every 15 seconds
+    const intervalId = setInterval(loadData, 15000);
 
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);

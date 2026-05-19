@@ -1,12 +1,25 @@
 """
-Script untuk mengisi database dengan data dummy testing.
-Jalankan: python seed_dummy.py
+Script untuk mengisi database Supabase dengan data dummy testing.
+Jalankan:
+  set SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+  set SUPABASE_KEY=YOUR_ANON_KEY
+  python seed_dummy.py
 """
-import sqlite3
+import os
 from datetime import datetime, timedelta
-import random
+import httpx
 
-DB_PATH = 'jemuran.db'
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://cwymyrcgpannbvxsyvza.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_aRfmN_3UXOEgB3VntEW8RA_AMH9Wqen")
+
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+}
+
+REST_URL = f"{SUPABASE_URL}/rest/v1"
 
 # Data dummy: (id_status, nilai_sensor, menit_lalu)
 dummy_data = [
@@ -22,23 +35,25 @@ dummy_data = [
     (1, 990, 1),    # Cerah (status terbaru)
 ]
 
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
-
 now = datetime.now()
 inserted = 0
 
 for id_status, nilai_sensor, menit_lalu in dummy_data:
     waktu = now - timedelta(minutes=menit_lalu)
-    waktu_str = waktu.strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute('''
-        INSERT INTO riwayat_cuaca (id_perangkat, id_status, nilai_analog_sensor, waktu_kejadian)
-        VALUES (1, ?, ?, ?)
-    ''', (id_status, nilai_sensor, waktu_str))
-    inserted += 1
+    waktu_str = waktu.isoformat()
+    
+    try:
+        resp = httpx.post(f"{REST_URL}/riwayat_cuaca", json={
+            "id_perangkat": 1,
+            "id_status": id_status,
+            "nilai_analog_sensor": nilai_sensor,
+            "waktu_kejadian": waktu_str
+        }, headers=HEADERS)
+        resp.raise_for_status()
+        inserted += 1
+        print(f"  ✅ Inserted: status={id_status}, sensor={nilai_sensor}, waktu={waktu_str}")
+    except Exception as e:
+        print(f"  ❌ Error: {e}")
 
-conn.commit()
-conn.close()
-
-print(f"✅ Berhasil insert {inserted} data dummy ke database.")
+print(f"\n✅ Berhasil insert {inserted} data dummy ke Supabase.")
 print("   Refresh dashboard frontend untuk melihat hasilnya!")

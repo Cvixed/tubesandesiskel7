@@ -4,12 +4,20 @@ import { getMockStatus, startMock, stopMock } from '../services/api';
 const MockToggle = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [backendOnline, setBackendOnline] = useState(true);
 
   // Cek status saat komponen mount
   useEffect(() => {
     getMockStatus()
-      .then(data => setIsRunning(data.running))
-      .catch(() => {});
+      .then(data => {
+        if (data.error) {
+          setBackendOnline(false);
+        } else {
+          setIsRunning(data.running);
+          setBackendOnline(true);
+        }
+      })
+      .catch(() => setBackendOnline(false));
   }, []);
 
   const handleToggle = async () => {
@@ -22,12 +30,37 @@ const MockToggle = () => {
         await startMock();
         setIsRunning(true);
       }
+      setBackendOnline(true);
     } catch (err) {
       console.error('Gagal toggle mock:', err);
+      setBackendOnline(false);
     } finally {
       setLoading(false);
     }
   };
+
+  // Jika backend offline, tampilkan versi minimal
+  if (!backendOnline) {
+    return (
+      <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl shadow-sm px-5 py-3 opacity-60">
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Simulasi Sensor
+          </span>
+          <span className="text-sm font-bold text-amber-500">
+            ⚠ Backend offline
+          </span>
+        </div>
+        <button
+          disabled
+          className="relative inline-flex h-7 w-14 items-center rounded-full bg-gray-300 opacity-50 cursor-not-allowed"
+          aria-label="Backend offline"
+        >
+          <span className="inline-block h-5 w-5 transform rounded-full bg-white shadow-md translate-x-1" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl shadow-sm px-5 py-3">

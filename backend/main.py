@@ -1,20 +1,37 @@
-import sqlite3
-import serial
+import os
 import threading
 import time
 import random
-from fastapi import FastAPI
+from datetime import datetime
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import contextlib
+import httpx
 
-DB_PATH = 'jemuran.db'
-SERIAL_PORT = 'COM3'  # Change to your exact Arduino serial port
-BAUD_RATE = 9600
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
-# Global state to keep track of the current status
+# Supabase Configuration
+# ⚠️ Ganti dengan credentials Supabase Anda, atau set environment variables
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://cwymyrcgpannbvxsyvza.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_aRfmN_3UXOEgB3VntEW8RA_AMH9Wqen")
+
+# Supabase REST API headers
+SUPABASE_HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+}
+
+# Base REST URL untuk PostgREST
+REST_URL = f"{SUPABASE_URL}/rest/v1"
+
+# --- Global State ---
 current_status_id = None
-ser = None
+pending_commands = {}  # device_id -> command string
 
 # --- Mock Simulation State ---
 mock_running = False
@@ -29,6 +46,77 @@ MOCK_SCENARIO = [
     (2, 400, 700,  5),   # Gerimis
     (1, 800, 990,  7),   # Cerah
 ]
+
+# ============================================================
+# SUPABASE HELPER FUNCTIONS (via httpx + PostgREST)
+# ============================================================
+
+def db_insert(table: str, data: dict):
+    """Insert data ke Supabase table."""
+    url = f"{REST_URL}/{table}"
+    response = httpx.post(url, json=data, headers=SUPABASE_HEADERS)
+    response.raise_for_status()
+    return response.json()
+
+def db_select(table: str, select: str = "*", order: str = None, limit: int = None, filters: dict = None):
+    """Select data dari Supabase table."""
+    url = f"{REST_URL}/{table}"
+    params = {"select": select}
+    
+    if order:
+        params["order"] = order
+    if limit:
+        params["limit"] = str(limit)
+    if filters:
+        params.update(filters)
+    
+    response = httpx.get(url, params=params, headers=SUPABASE_HEADERS)
+    response.raise_for_status()
+    return response.json()
+
+# ============================================================
+# SENSOR DATA PROCESSING
+# ============================================================
+
+def process_sensor_value(value: int, device_id: int = 1):
+    """Proses nilai sensor, simpan ke database jika status berubah."""
+    global current_status_id
+
+    # Classification Rule
+    if value > 800:
+        new_status = 1  # Cerah
+    elif 400 <= value <= 800:
+        new_status = 2  # Gerimis
+    else:
+        new_status = 3  # Hujan
+
+    if current_status_id != new_status:
+        print(f"Status changed to {new_status} (Value: {value})")
+
+        # Insert ke Supabase via REST API
+        try:
+            db_insert("riwayat_cuaca", {
+                "id_perangkat": device_id,
+                "id_status": new_status,
+                "nilai_analog_sensor": value,
+                "waktu_kejadian": datetime.now().isoformat()
+            })
+        except Exception as e:
+            print(f"[DB] Error inserting data: {e}")
+
+        # Alarm Logic - simpan command untuk Arduino
+        if new_status == 3:
+            pending_commands[device_id] = "ALARM_ON"
+        elif current_status_id == 3 and new_status in [1, 2]:
+            pending_commands[device_id] = "ALARM_OFF"
+
+        current_status_id = new_status
+
+    return new_status
+
+# ============================================================
+# MOCK SIMULATION
+# ============================================================
 
 def mock_simulation_loop():
     """Loop simulasi sensor dummy yang bisa dihentikan via toggle."""
@@ -61,87 +149,29 @@ def mock_simulation_loop():
 
     print("[MOCK] Simulasi loop selesai.")
 
-def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def read_serial_loop():
-    global current_status_id, ser
-    try:
-        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-        print(f"Connected to Serial Port: {SERIAL_PORT}")
-    except serial.SerialException as e:
-        print(f"Failed to connect to Serial Port: {e}")
-        print("Running in MOCK mode. API will work, but no real sensor data will be read.")
-        ser = None
-
-    while True:
-        if ser and ser.is_open:
-            try:
-                line = ser.readline().decode('utf-8').strip()
-                if line.isdigit():
-                    value = int(line)
-                    process_sensor_value(value)
-            except Exception as e:
-                print(f"Error reading serial: {e}")
-                time.sleep(1)
-        else:
-            # Mock mode: wait
-            time.sleep(2)
-
-def process_sensor_value(value: int):
-    global current_status_id
-
-    # Classification Rule
-    if value > 800:
-        new_status = 1  # Cerah
-    elif 400 <= value <= 800:
-        new_status = 2  # Gerimis
-    else:
-        new_status = 3  # Hujan
-
-    if current_status_id != new_status:
-        print(f"Status changed to {new_status} (Value: {value})")
-
-        # Insert to DB only on change
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO riwayat_cuaca (id_perangkat, id_status, nilai_analog_sensor)
-            VALUES (1, ?, ?)
-        ''', (new_status, value))
-        conn.commit()
-        conn.close()
-
-        # Alarm Logic
-        if new_status == 3:
-            send_serial_command("ALARM_ON\\n")
-        elif current_status_id == 3 and new_status in [1, 2]:
-            send_serial_command("ALARM_OFF\\n")
-
-        current_status_id = new_status
-
-def send_serial_command(command: str):
-    global ser
-    if ser and ser.is_open:
-        try:
-            ser.write(command.encode('utf-8'))
-            print(f"Sent to Arduino: {command.strip()}")
-        except Exception as e:
-            print(f"Failed to send command: {e}")
-    else:
-        print(f"[MOCK] Would send to Arduino: {command.strip()}")
+# ============================================================
+# FASTAPI APP
+# ============================================================
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    thread = threading.Thread(target=read_serial_loop, daemon=True)
-    thread.start()
+    # Startup - cek koneksi Supabase
+    print("[Server] Starting up...")
+    try:
+        result = db_select("status_cuaca")
+        print(f"[DB] Connected to Supabase. Status cuaca records: {len(result)}")
+    except Exception as e:
+        print(f"[DB] WARNING: Could not connect to Supabase: {e}")
     yield
-    # Shutdown logic if any
+    # Shutdown
+    print("[Server] Shutting down...")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Sistem Monitoring Jemuran API",
+    description="IoT Edge-to-Web Monitoring System with Arduino + ESP-01 WiFi",
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -151,60 +181,140 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/status")
-def get_status():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    # Get the latest row
-    cursor.execute('''
-        SELECT r.waktu_kejadian, s.nama_kondisi, s.kode_warna, s.id_status
-        FROM riwayat_cuaca r
-        JOIN status_cuaca s ON r.id_status = s.id_status
-        ORDER BY r.id_riwayat DESC
-        LIMIT 1
-    ''')
-    row = cursor.fetchone()
-    conn.close()
+# ============================================================
+# PYDANTIC MODELS
+# ============================================================
 
-    if not row:
-        return {
-            "status": "No data",
-            "cuaca": "-",
-            "warna": "Abu-abu",
-            "pesan_peringatan": "Belum ada data dari sensor",
-            "waktu_update": "-"
-        }
-
-    status_id = row['id_status']
-    pesan_peringatan = "Segera Angkat Pakaian!" if status_id == 3 else "Aman"
-
-    return {
-        "cuaca": row['nama_kondisi'],
-        "warna": row['kode_warna'],
-        "pesan_peringatan": pesan_peringatan,
-        "waktu_update": row['waktu_kejadian']
-    }
-
-@app.get("/api/history")
-def get_history():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT r.id_riwayat, r.nilai_analog_sensor, r.waktu_kejadian, s.nama_kondisi, s.kode_warna
-        FROM riwayat_cuaca r
-        JOIN status_cuaca s ON r.id_status = s.id_status
-        ORDER BY r.waktu_kejadian DESC
-        LIMIT 20
-    ''')
-    rows = cursor.fetchall()
-    conn.close()
-
-    return [dict(row) for row in rows]
-
-# ─── Mock Simulation Endpoints ────────────────────────────────────────────────
+class SensorData(BaseModel):
+    device_id: int = 1
+    sensor_value: int
+    status_id: int
 
 class MockData(BaseModel):
     value: int
+
+class CommandData(BaseModel):
+    device_id: int
+    command: str
+
+# ============================================================
+# API ENDPOINTS - SENSOR (untuk Arduino)
+# ============================================================
+
+@app.post("/api/sensor")
+def receive_sensor_data(data: SensorData):
+    """
+    Endpoint untuk Arduino mengirim data sensor via HTTP POST.
+    Arduino mengirim: { device_id, sensor_value, status_id }
+    Server memproses dan mengembalikan command jika ada.
+    """
+    new_status = process_sensor_value(data.sensor_value, data.device_id)
+
+    # Cek apakah ada command pending untuk device ini
+    command = pending_commands.pop(data.device_id, "NONE")
+
+    return {
+        "status": "ok",
+        "processed_status": new_status,
+        "command": command
+    }
+
+@app.get("/api/command/{device_id}")
+def get_command(device_id: int):
+    """
+    Endpoint alternatif untuk Arduino mengambil command.
+    """
+    command = pending_commands.pop(device_id, "NONE")
+    return {"command": command}
+
+# ============================================================
+# API ENDPOINTS - DASHBOARD (untuk Frontend)
+# ============================================================
+
+@app.get("/api/status")
+def get_status():
+    """Ambil status cuaca terbaru untuk dashboard."""
+    try:
+        # Query riwayat_cuaca JOIN status_cuaca, order by id_riwayat DESC, limit 1
+        result = db_select(
+            "riwayat_cuaca",
+            select="waktu_kejadian,nilai_analog_sensor,id_status,status_cuaca(nama_kondisi,kode_warna)",
+            order="id_riwayat.desc",
+            limit=1
+        )
+
+        if not result:
+            return {
+                "status": "No data",
+                "cuaca": "-",
+                "warna": "Abu-abu",
+                "pesan_peringatan": "Belum ada data dari sensor",
+                "waktu_update": "-",
+                "nilai_sensor": 0
+            }
+
+        row = result[0]
+        status_cuaca = row.get("status_cuaca", {})
+        status_id = row.get("id_status")
+        pesan_peringatan = "Segera Angkat Pakaian!" if status_id == 3 else "Aman"
+
+        return {
+            "cuaca": status_cuaca.get("nama_kondisi", "-"),
+            "warna": status_cuaca.get("kode_warna", "Abu-abu"),
+            "pesan_peringatan": pesan_peringatan,
+            "waktu_update": row.get("waktu_kejadian", "-"),
+            "nilai_sensor": row.get("nilai_analog_sensor", 0)
+        }
+    except Exception as e:
+        print(f"[API] Error getting status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/history")
+def get_history():
+    """Ambil riwayat perubahan cuaca untuk tabel history."""
+    try:
+        result = db_select(
+            "riwayat_cuaca",
+            select="id_riwayat,nilai_analog_sensor,waktu_kejadian,id_status,status_cuaca(nama_kondisi,kode_warna)",
+            order="waktu_kejadian.desc",
+            limit=20
+        )
+
+        history = []
+        for row in result:
+            status_cuaca = row.get("status_cuaca", {})
+            history.append({
+                "id_riwayat": row.get("id_riwayat"),
+                "nilai_analog_sensor": row.get("nilai_analog_sensor"),
+                "waktu_kejadian": row.get("waktu_kejadian"),
+                "nama_kondisi": status_cuaca.get("nama_kondisi", "-"),
+                "kode_warna": status_cuaca.get("kode_warna", "Abu-abu"),
+            })
+
+        return history
+    except Exception as e:
+        print(f"[API] Error getting history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# API ENDPOINTS - ALARM CONTROL (untuk Frontend manual control)
+# ============================================================
+
+@app.post("/api/alarm")
+def set_alarm(data: CommandData):
+    """
+    Frontend bisa mengirim command ke Arduino secara manual.
+    Contoh: { "device_id": 1, "command": "ALARM_ON" }
+    """
+    if data.command not in ["ALARM_ON", "ALARM_OFF"]:
+        raise HTTPException(status_code=400, detail="Command harus ALARM_ON atau ALARM_OFF")
+
+    pending_commands[data.device_id] = data.command
+    return {"status": "ok", "message": f"Command '{data.command}' queued for device {data.device_id}"}
+
+# ============================================================
+# API ENDPOINTS - MOCK SIMULATION
+# ============================================================
 
 @app.post("/api/mock_sensor")
 def mock_sensor(data: MockData):
@@ -239,3 +349,23 @@ def stop_mock():
 def get_mock_status():
     """Cek apakah loop simulasi sedang berjalan."""
     return {"running": mock_running}
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint untuk monitoring."""
+    try:
+        result = db_select("status_cuaca")
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+
+    return {
+        "status": "ok",
+        "database": db_status,
+        "mock_running": mock_running,
+        "version": "2.0.0"
+    }

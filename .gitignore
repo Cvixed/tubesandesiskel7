@@ -1,0 +1,22 @@
+# Python / Backend
+.venv/
+__pycache__/
+*.pyc
+*.db
+backend/.env
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Editor
+.vscode/
+.clangd/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
