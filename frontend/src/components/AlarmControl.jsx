@@ -14,7 +14,7 @@ const AlarmControl = () => {
       setTimeout(() => setLastAction(null), 3000);
     } catch (err) {
       console.error('Failed to send alarm command', err);
-      alert('Gagal mengirim perintah. Pastikan backend online.');
+      alert('Gagal mengirim perintah ke database. Periksa koneksi internet Anda.');
     } finally {
       setLoading(false);
     }

@@ -1,14 +1,4 @@
-import axios from 'axios';
 import { supabase } from './supabase';
-
-// Di Vercel, frontend dan backend ada di domain yang sama.
-// Jadi di production kita biarkan kosong agar URL-nya relatif (mengikuti domain saat ini).
-const isProd = import.meta.env.PROD;
-const API_BASE_URL = import.meta.env.VITE_API_URL || (isProd ? '' : 'http://localhost:8000');
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
 
 // Helper untuk format waktu sesuai dengan Timezone otomatis dari Browser/Perangkat
 const formatWaktu = (isoString) => {
@@ -25,7 +15,7 @@ const formatWaktu = (isoString) => {
   }).format(date);
 };
 
-// ─── Dashboard Endpoints (langsung ke Supabase) ───────────────
+// ─── Dashboard Endpoints ───────────────
 
 export const fetchStatus = async () => {
   const { data, error } = await supabase
@@ -76,35 +66,72 @@ export const fetchHistory = async () => {
   }));
 };
 
-// ─── Mock Simulation (butuh backend running) ──────────────────
+// ─── Mock Simulation (Full Serverless) ──────────────────
+
+let mockInterval = null;
+const MOCK_SCENARIO = [
+    { id_status: 1, val_min: 850, val_max: 1000 }, // Cerah
+    { id_status: 2, val_min: 450, val_max: 799 },  // Gerimis
+    { id_status: 3, val_min: 50, val_max: 350 },   // Hujan
+    { id_status: 2, val_min: 400, val_max: 700 },  // Gerimis
+];
 
 export const getMockStatus = async () => {
-  try {
-    const response = await api.get('/api/mock/status');
-    return response.data;
-  } catch {
-    return { running: false, error: true };
-  }
+  return { running: mockInterval !== null };
 };
 
 export const startMock = async () => {
-  const response = await api.post('/api/mock/start');
-  return response.data;
+  if (mockInterval) return { status: 'already_running' };
+  
+  let scenarioIndex = 0;
+  let counter = 0;
+  
+  // Jalan setiap 3 detik
+  mockInterval = setInterval(async () => {
+      const scenario = MOCK_SCENARIO[scenarioIndex];
+      const value = Math.floor(Math.random() * (scenario.val_max - scenario.val_min + 1)) + scenario.val_min;
+      
+      try {
+          await supabase.from('riwayat_cuaca').insert([{
+              id_perangkat: 1,
+              id_status: scenario.id_status,
+              nilai_analog_sensor: value
+          }]);
+      } catch (err) {
+          console.error("Mock insert failed", err);
+      }
+      
+      counter++;
+      // Ganti cuaca setiap 3 kali kirim
+      if (counter >= 3) {
+          counter = 0;
+          scenarioIndex = (scenarioIndex + 1) % MOCK_SCENARIO.length;
+      }
+  }, 3000);
+  
+  return { status: 'started' };
 };
 
 export const stopMock = async () => {
-  const response = await api.post('/api/mock/stop');
-  return response.data;
+  if (mockInterval) {
+      clearInterval(mockInterval);
+      mockInterval = null;
+  }
+  return { status: 'stopped' };
 };
 
-// ─── Alarm Control (butuh backend running) ────────────────────
+// ─── Alarm Control (Serverless Supabase) ────────────────────
 
 export const sendAlarmCommand = async (deviceId, command) => {
-  const response = await api.post('/api/alarm', {
-    device_id: deviceId,
-    command: command,
-  });
-  return response.data;
+  const { data, error } = await supabase
+    .from('perintah_perangkat')
+    .insert([{ id_perangkat: deviceId, command: command, status: 'pending' }]);
+    
+  if (error) {
+    console.error("Failed to insert command to Supabase", error);
+    throw error;
+  }
+  
+  return data;
 };
 
-export default api;

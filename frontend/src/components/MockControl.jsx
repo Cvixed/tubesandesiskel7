@@ -34,7 +34,7 @@ const MockControl = () => {
       await checkStatus();
     } catch (err) {
       console.error("Gagal mengubah status mock", err);
-      alert("Gagal mengirim perintah ke backend. Pastikan backend FastAPI Anda sedang berjalan lokal.");
+      alert("Terjadi kesalahan saat memulai simulasi (koneksi database).");
     } finally {
       setLoading(false);
     }
