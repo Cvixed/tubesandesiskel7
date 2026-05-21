@@ -45,6 +45,25 @@ def check_alarm_commands():
     global serial_port
     rest_url = f"{SUPABASE_URL}/rest/v1"
 
+    # Tes koneksi pertama kali
+    try:
+        test = httpx.get(
+            f"{rest_url}/perintah_perangkat",
+            params={"select": "id", "limit": "1"},
+            headers=SUPABASE_HEADERS,
+            timeout=5
+        )
+        if test.status_code == 200:
+            print("✅ [Alarm] Tabel 'perintah_perangkat' ditemukan di Supabase.")
+        else:
+            print(f"❌ [Alarm] Tabel 'perintah_perangkat' TIDAK ditemukan! HTTP {test.status_code}")
+            print(f"   Response: {test.text}")
+            print("   Buat tabel ini di Supabase SQL Editor terlebih dahulu!")
+            return
+    except Exception as e:
+        print(f"❌ [Alarm] Gagal konek ke Supabase: {e}")
+        return
+
     while True:
         try:
             # Cari perintah dengan status 'pending'
@@ -82,10 +101,11 @@ def check_alarm_commands():
                         timeout=5
                     )
                     print(f"  [Supabase] Status perintah diupdate ke 'done'\n")
+            else:
+                print(f"  [Alarm] Error HTTP {response.status_code}: {response.text}")
 
         except Exception as e:
-            # Abaikan error koneksi
-            pass
+            print(f"  [Alarm] Error: {e}")
 
         time.sleep(2)  # Cek setiap 2 detik
 
