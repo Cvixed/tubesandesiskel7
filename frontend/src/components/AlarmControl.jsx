@@ -23,8 +23,8 @@ const AlarmControl = () => {
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
       <div className="mb-4">
-        <h3 className="text-lg font-bold text-slate-800">Kontrol Alarm Manual</h3>
-        <p className="text-sm text-slate-500">Kendalikan buzzer di Arduino dari jarak jauh</p>
+        <h3 className="text-lg font-bold text-slate-800">Kontrol Buzzer</h3>
+        <p className="text-sm text-slate-500">Nyalakan atau matikan buzzer di Arduino dari jarak jauh</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -34,7 +34,7 @@ const AlarmControl = () => {
           className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bell className="w-5 h-5" />}
-          Bunyikan Alarm
+          Nyalakan Buzzer
         </button>
         
         <button
@@ -43,13 +43,13 @@ const AlarmControl = () => {
           className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BellOff className="w-5 h-5" />}
-          Matikan Alarm
+          Matikan Buzzer
         </button>
       </div>
 
       {lastAction && (
         <p className={`mt-3 text-sm text-center font-medium ${lastAction === 'on' ? 'text-red-500' : 'text-slate-500'}`}>
-          ✓ Perintah {lastAction === 'on' ? 'Bunyikan' : 'Matikan'} berhasil dikirim ke perangkat!
+          ✓ Buzzer berhasil {lastAction === 'on' ? 'dinyalakan' : 'dimatikan'}!
         </p>
       )}
     </div>

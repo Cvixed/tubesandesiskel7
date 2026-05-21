@@ -21,10 +21,10 @@ const long buzzerInterval = 500; // Interval blink buzzer (500 ms)
 int buzzerState = LOW;
 
 // --- Manual Override dari Website ---
-bool manualOverride = false;       // true = buzzer dikontrol manual dari website
+// true = buzzer dikontrol penuh oleh website, sensor tidak bisa mengubahnya
+// hanya bisa diubah kembali oleh perintah dari website
+bool manualOverride = false;
 bool manualBuzzerState = false;    // true = ON, false = OFF
-unsigned long manualOverrideTime = 0;
-const unsigned long OVERRIDE_DURATION = 30000; // Override berlaku 30 detik, lalu kembali otomatis
 
 // ============================================================
 // SETUP
@@ -46,7 +46,7 @@ void setup() {
   digitalWrite(ledHijau, LOW);
   digitalWrite(buzzerPin, LOW);
 
-  // Startup animation - nyalakan LED satu per satu
+  // Startup animation
   startupAnimation();
   
   Serial.println(F("SYSTEM_READY"));
@@ -58,34 +58,31 @@ void setup() {
 void loop() {
   unsigned long currentTime = millis();
 
-  // 1. Cek perintah masuk dari Laptop (perintah alarm dari website)
+  // 1. Cek perintah masuk dari Laptop / Website
   if (Serial.available()) {
     String command = Serial.readStringUntil('\n');
     command.trim();
     if (command == "ALARM_ON") {
       manualOverride = true;
       manualBuzzerState = true;
-      manualOverrideTime = currentTime;
       digitalWrite(buzzerPin, HIGH);
       Serial.println(F("CMD_OK:ALARM_ON"));
     } else if (command == "ALARM_OFF") {
       manualOverride = true;
       manualBuzzerState = false;
-      manualOverrideTime = currentTime;
       digitalWrite(buzzerPin, LOW);
       Serial.println(F("CMD_OK:ALARM_OFF"));
+    } else if (command == "AUTO") {
+      // Perintah untuk kembali ke mode otomatis (opsional)
+      manualOverride = false;
+      Serial.println(F("CMD_OK:AUTO"));
     }
   }
 
-  // 2. Cek apakah manual override sudah expired (kembali ke otomatis setelah 30 detik)
-  if (manualOverride && (currentTime - manualOverrideTime >= OVERRIDE_DURATION)) {
-    manualOverride = false;
-    Serial.println(F("OVERRIDE_EXPIRED"));
-  }
-
-  // 3. Update Buzzer
+  // 2. Update Buzzer
   if (manualOverride) {
-    // Mode Manual: buzzer dikontrol oleh perintah website
+    // Mode Manual: buzzer sepenuhnya dikontrol oleh website
+    // Tidak ada expiry, tetap manual sampai user kirim perintah lain
     digitalWrite(buzzerPin, manualBuzzerState ? HIGH : LOW);
   } else {
     // Mode Otomatis: buzzer dikontrol oleh sensor
@@ -93,11 +90,7 @@ void loop() {
       // Gerimis: Buzzer berkedip (Blink)
       if (currentTime - previousBuzzerMillis >= buzzerInterval) {
         previousBuzzerMillis = currentTime;
-        if (buzzerState == LOW) {
-          buzzerState = HIGH;
-        } else {
-          buzzerState = LOW;
-        }
+        buzzerState = (buzzerState == LOW) ? HIGH : LOW;
         digitalWrite(buzzerPin, buzzerState);
       }
     } else if (currentStatus == 3) {
@@ -109,7 +102,7 @@ void loop() {
     }
   }
 
-  // 4. Baca sensor & proses setiap SEND_INTERVAL (2 detik)
+  // 3. Baca sensor & proses setiap SEND_INTERVAL (2 detik)
   if (currentTime - lastSendTime >= SEND_INTERVAL) {
     lastSendTime = currentTime;
 
@@ -122,15 +115,10 @@ void loop() {
     // Update LED sesuai status (LED tetap mengikuti sensor, tidak terpengaruh override)
     updateLEDs(newStatus);
 
-    // Jika status cuaca berubah, reset manual override
-    if (newStatus != currentStatus) {
-      manualOverride = false;
-    }
-
     // Update current status
     currentStatus = newStatus;
 
-    // Kirim data ke Python Script di Laptop (Format: DATA:nilai,status)
+    // Kirim data ke Python Script di Laptop
     Serial.print("DATA:");
     Serial.print(sensorValue);
     Serial.print(",");
@@ -155,22 +143,14 @@ int classifyWeather(int value) {
 // LED CONTROL
 // ============================================================
 void updateLEDs(int status) {
-  // Matikan semua LED dulu
   digitalWrite(ledMerah, LOW);
   digitalWrite(ledKuning, LOW);
   digitalWrite(ledHijau, LOW);
 
-  // Nyalakan LED sesuai status
   switch (status) {
-    case 1:  // Cerah → Hijau
-      digitalWrite(ledHijau, HIGH);
-      break;
-    case 2:  // Gerimis → Kuning
-      digitalWrite(ledKuning, HIGH);
-      break;
-    case 3:  // Hujan → Merah
-      digitalWrite(ledMerah, HIGH);
-      break;
+    case 1: digitalWrite(ledHijau, HIGH); break;
+    case 2: digitalWrite(ledKuning, HIGH); break;
+    case 3: digitalWrite(ledMerah, HIGH); break;
   }
 }
 
@@ -178,22 +158,13 @@ void updateLEDs(int status) {
 // STARTUP ANIMATION
 // ============================================================
 void startupAnimation() {
-  // Nyalakan LED satu per satu untuk indikasi startup
-  digitalWrite(ledHijau, HIGH);
-  delay(300);
-  digitalWrite(ledKuning, HIGH);
-  delay(300);
-  digitalWrite(ledMerah, HIGH);
-  delay(300);
+  digitalWrite(ledHijau, HIGH); delay(300);
+  digitalWrite(ledKuning, HIGH); delay(300);
+  digitalWrite(ledMerah, HIGH); delay(300);
 
-  // Buzzer beep singkat
-  digitalWrite(buzzerPin, HIGH);
-  delay(100);
-  digitalWrite(buzzerPin, LOW);
-
+  digitalWrite(buzzerPin, HIGH); delay(100); digitalWrite(buzzerPin, LOW);
   delay(500);
 
-  // Matikan semua
   digitalWrite(ledMerah, LOW);
   digitalWrite(ledKuning, LOW);
   digitalWrite(ledHijau, LOW);
