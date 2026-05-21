@@ -94,10 +94,10 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pb-12">
+    <div className="min-h-screen bg-gray-50 font-sans pb-8 sm:pb-12">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
         {error && (
           <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
             <div className="flex">

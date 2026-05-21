@@ -26,15 +26,33 @@ const HistoryTable = ({ history }) => {
   };
 
   return (
-    <div className="mt-12 bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
-      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-        <h3 className="text-lg leading-6 font-bold text-gray-900">Riwayat Perubahan Cuaca</h3>
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-          Terakhir {history.length} data
+    <div className="mt-8 sm:mt-12 bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+      <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+        <h3 className="text-base sm:text-lg leading-6 font-bold text-gray-900">Riwayat Perubahan Cuaca</h3>
+        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-indigo-100 text-indigo-800">
+          {history.length} data
         </span>
       </div>
       
-      <div className="overflow-x-auto">
+      {/* Mobile card view */}
+      <div className="block sm:hidden divide-y divide-gray-100">
+        {history.map((item) => (
+          <div key={item.id_riwayat} className="p-4 flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-500 truncate">{item.waktu_kejadian}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getBadgeColor(item.kode_warna)}`}>
+                  {item.nama_kondisi}
+                </span>
+                <span className="text-xs text-gray-400 font-mono">Sensor: {item.nilai_analog_sensor}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

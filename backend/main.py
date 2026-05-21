@@ -129,15 +129,16 @@ def process_sensor_value(value: int, device_id: int = 1):
     except Exception as e:
         print(f"[DB] Error inserting data: {e}")
 
-    # Alarm Logic - hanya kirim notifikasi saat status BERUBAH
+    # Alarm Logic - kirim notifikasi Telegram saat status BERUBAH
     if current_status_id != new_status:
         if new_status == 3:
             pending_commands[device_id] = "ALARM_ON"
-            if current_status_id != 3:
-                send_telegram_alert("⚠️ <b>PERINGATAN JEMURAN!</b> ⚠️\n\nHujan terdeteksi oleh sensor. Segera angkat jemuran Anda sekarang!")
-        elif current_status_id == 3 and new_status in [1, 2]:
+            send_telegram_alert("🌧️ <b>HUJAN TERDETEKSI!</b> 🌧️\n\n⚠️ Segera angkat jemuran Anda sekarang!\n\n📊 Nilai Sensor: " + str(value))
+        elif new_status == 2:
+            send_telegram_alert("🌦️ <b>GERIMIS TERDETEKSI!</b> 🌦️\n\n⚠️ Segera angkat jemuran Anda!\nGerimis bisa berubah menjadi hujan kapan saja.\n\n📊 Nilai Sensor: " + str(value))
+        elif new_status == 1 and current_status_id in [2, 3]:
             pending_commands[device_id] = "ALARM_OFF"
-            send_telegram_alert("✅ <b>Hujan Berhenti</b>\n\nCuaca kembali membaik (Cerah/Gerimis). Alarm telah dimatikan otomatis.")
+            send_telegram_alert("☀️ <b>Cuaca Kembali Cerah</b> ☀️\n\n✅ Aman untuk menjemur kembali.\n\n📊 Nilai Sensor: " + str(value))
 
         current_status_id = new_status
 
