@@ -4,7 +4,7 @@ import StatusCard from './components/StatusCard';
 import HistoryTable from './components/HistoryTable';
 import WeatherForecast from './components/WeatherForecast';
 import AlarmControl from './components/AlarmControl';
-import MockControl from './components/MockControl';
+
 import HistoryChart from './components/HistoryChart';
 import { fetchStatus, fetchHistory } from './services/api';
 
@@ -121,7 +121,7 @@ function App() {
 
         {/* Middle Grid: Mock & Alarm Control */}
         <div className="mb-8 grid grid-cols-1 gap-6">
-          <MockControl />
+
           <AlarmControl />
         </div>
         
