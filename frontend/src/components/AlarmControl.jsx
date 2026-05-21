@@ -29,18 +29,9 @@ const AlarmControl = () => {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          onClick={() => handleCommand('ALARM_ON')}
-          disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
-        >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bell className="w-5 h-5" />}
-          Bunyikan Alarm
-        </button>
-        
-        <button
           onClick={() => handleCommand('ALARM_OFF')}
           disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BellOff className="w-5 h-5" />}
           Matikan Alarm
