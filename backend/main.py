@@ -27,8 +27,8 @@ SUPABASE_HEADERS = {
 }
 
 # Telegram Bot Configuration
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8989165701:AAFooOwzsx9YbTDA7pF_nYxxsbXbPvuCYIU")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "5863934219")
 
 # Base REST URL untuk PostgREST
 REST_URL = f"{SUPABASE_URL}/rest/v1"
