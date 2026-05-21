@@ -21,10 +21,9 @@ const long buzzerInterval = 500; // Interval blink buzzer (500 ms)
 int buzzerState = LOW;
 
 // --- Manual Override dari Website ---
-// true = buzzer dikontrol penuh oleh website, sensor tidak bisa mengubahnya
-// hanya bisa diubah kembali oleh perintah dari website
+// true = buzzer MATI total (dikontrol website), sensor tidak bisa menyalakannya
+// false = buzzer mengikuti sensor secara otomatis
 bool manualOverride = false;
-bool manualBuzzerState = false;    // true = ON, false = OFF
 
 // ============================================================
 // SETUP
@@ -63,13 +62,12 @@ void loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
     if (command == "ALARM_ON") {
-      manualOverride = true;
-      manualBuzzerState = true;
-      digitalWrite(buzzerPin, HIGH);
+      // Kembali ke mode otomatis (buzzer menyala sesuai sensor)
+      manualOverride = false;
       Serial.println(F("CMD_OK:ALARM_ON"));
     } else if (command == "ALARM_OFF") {
+      // Matikan buzzer total, abaikan sensor
       manualOverride = true;
-      manualBuzzerState = false;
       digitalWrite(buzzerPin, LOW);
       Serial.println(F("CMD_OK:ALARM_OFF"));
     } else if (command == "AUTO") {
@@ -81,9 +79,8 @@ void loop() {
 
   // 2. Update Buzzer
   if (manualOverride) {
-    // Mode Manual: buzzer sepenuhnya dikontrol oleh website
-    // Tidak ada expiry, tetap manual sampai user kirim perintah lain
-    digitalWrite(buzzerPin, manualBuzzerState ? HIGH : LOW);
+    // Mode Manual: buzzer MATI total (dimatikan dari website)
+    digitalWrite(buzzerPin, LOW);
   } else {
     // Mode Otomatis: buzzer dikontrol oleh sensor
     if (currentStatus == 2) {
