@@ -104,35 +104,36 @@ def send_telegram_alert(message: str):
 # ============================================================
 
 def process_sensor_value(value: int, device_id: int = 1):
-    """Proses nilai sensor, simpan ke database jika status berubah."""
+    """Proses nilai sensor, simpan ke database."""
     global current_status_id
 
-    # Classification Rule
-    if value > 800:
+    # Classification Rule - HARUS SAMA dengan Arduino sketch_local.ino
+    if value > 500:
         new_status = 1  # Cerah
-    elif 400 <= value <= 800:
+    elif value >= 300:
         new_status = 2  # Gerimis
     else:
         new_status = 3  # Hujan
 
+    print(f"Sensor value={value}, Status={new_status}")
+
+    # Selalu insert data terbaru ke Supabase
+    try:
+        db_insert("riwayat_cuaca", {
+            "id_perangkat": device_id,
+            "id_status": new_status,
+            "nilai_analog_sensor": value,
+            "waktu_kejadian": datetime.now().isoformat()
+        })
+        print(f"[DB] Data inserted: value={value}, status={new_status}")
+    except Exception as e:
+        print(f"[DB] Error inserting data: {e}")
+
+    # Alarm Logic - hanya kirim notifikasi saat status BERUBAH
     if current_status_id != new_status:
-        print(f"Status changed to {new_status} (Value: {value})")
-
-        # Insert ke Supabase via REST API
-        try:
-            db_insert("riwayat_cuaca", {
-                "id_perangkat": device_id,
-                "id_status": new_status,
-                "nilai_analog_sensor": value,
-                "waktu_kejadian": datetime.now().isoformat()
-            })
-        except Exception as e:
-            print(f"[DB] Error inserting data: {e}")
-
-        # Alarm Logic - simpan command untuk Arduino & Kirim Notif Telegram
         if new_status == 3:
             pending_commands[device_id] = "ALARM_ON"
-            if current_status_id != 3: # Hanya kirim jika sebelumnya bukan hujan
+            if current_status_id != 3:
                 send_telegram_alert("⚠️ <b>PERINGATAN JEMURAN!</b> ⚠️\n\nHujan terdeteksi oleh sensor. Segera angkat jemuran Anda sekarang!")
         elif current_status_id == 3 and new_status in [1, 2]:
             pending_commands[device_id] = "ALARM_OFF"
