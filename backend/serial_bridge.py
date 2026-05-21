@@ -49,7 +49,7 @@ def check_alarm_commands():
     try:
         test = httpx.get(
             f"{rest_url}/perintah_perangkat",
-            params={"select": "id", "limit": "1"},
+            params={"select": "id_perintah", "limit": "1"},
             headers=SUPABASE_HEADERS,
             timeout=5
         )
@@ -70,9 +70,9 @@ def check_alarm_commands():
             response = httpx.get(
                 f"{rest_url}/perintah_perangkat",
                 params={
-                    "select": "id,command",
+                    "select": "id_perintah,command",
                     "status": "eq.pending",
-                    "order": "created_at.asc",
+                    "order": "waktu_dibuat.asc",
                     "limit": "1"
                 },
                 headers=SUPABASE_HEADERS,
@@ -84,7 +84,7 @@ def check_alarm_commands():
                 if commands and len(commands) > 0:
                     cmd = commands[0]
                     command_text = cmd.get("command", "")
-                    command_id = cmd.get("id")
+                    command_id = cmd.get("id_perintah")
 
                     print(f"\n🔔 [Website] Perintah diterima: {command_text}")
 
@@ -95,7 +95,7 @@ def check_alarm_commands():
 
                     # Update status jadi 'done' di Supabase
                     httpx.patch(
-                        f"{rest_url}/perintah_perangkat?id=eq.{command_id}",
+                        f"{rest_url}/perintah_perangkat?id_perintah=eq.{command_id}",
                         json={"status": "done"},
                         headers=SUPABASE_HEADERS,
                         timeout=5
