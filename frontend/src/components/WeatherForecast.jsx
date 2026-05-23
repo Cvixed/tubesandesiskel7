@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, CloudRain, Sun, Cloud, Loader2, Wind, Droplets, Clock, CalendarDays } from 'lucide-react';
 
-const WeatherForecast = ({ cuaca }) => {
-  const isDark = cuaca?.toLowerCase() === 'hujan';
+const WeatherForecast = ({ cuaca, isNightMode }) => {
+  const isDark = isNightMode || cuaca?.toLowerCase() === 'hujan';
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

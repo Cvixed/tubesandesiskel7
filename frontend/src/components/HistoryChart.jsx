@@ -1,10 +1,10 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const HistoryChart = ({ history, cuaca }) => {
+const HistoryChart = ({ history, cuaca, isNightMode }) => {
   if (!history || history.length === 0) return null;
 
-  const isDark = cuaca?.toLowerCase() === 'hujan';
+  const isDark = isNightMode || cuaca?.toLowerCase() === 'hujan';
 
   // Siapkan data untuk chart (balik urutan agar data terlama di kiri, terbaru di kanan)
   const chartData = [...history].reverse().map(item => {

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { sendAlarmCommand } from '../services/api';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 
-const AlarmControl = ({ cuaca }) => {
+const AlarmControl = ({ cuaca, isNightMode }) => {
   const [loading, setLoading] = useState(false);
   const [lastAction, setLastAction] = useState(null); // 'on' or 'off'
-  const isDark = cuaca?.toLowerCase() === 'hujan';
+  const isDark = isNightMode || cuaca?.toLowerCase() === 'hujan';
 
   const handleCommand = async (cmd) => {
     setLoading(true);

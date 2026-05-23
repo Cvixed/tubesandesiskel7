@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StatusCard = ({ status }) => {
+const StatusCard = ({ status, isNightMode }) => {
   if (!status) {
     return (
       <div className="flex justify-center items-center h-48 bg-gray-100 rounded-2xl shadow-inner animate-pulse">
@@ -47,7 +47,7 @@ const StatusCard = ({ status }) => {
     }
   };
 
-  const isDark = cuaca?.toLowerCase() === 'hujan';
+  const isDark = isNightMode || cuaca?.toLowerCase() === 'hujan';
   
   // Calculate Gauge (Max 1024 for Arduino analog)
   const sensorValue = status?.nilai_sensor || 0;

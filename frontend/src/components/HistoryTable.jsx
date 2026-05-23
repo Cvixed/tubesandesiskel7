@@ -1,7 +1,7 @@
 import React from 'react';
 
-const HistoryTable = ({ history, cuaca }) => {
-  const isDark = cuaca?.toLowerCase() === 'hujan';
+const HistoryTable = ({ history, cuaca, isNightMode }) => {
+  const isDark = isNightMode || cuaca?.toLowerCase() === 'hujan';
 
   if (!history || history.length === 0) {
     return (
