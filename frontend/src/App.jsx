@@ -124,8 +124,11 @@ function App() {
   // Arduino Watchdog: Offline if no update for 2 minutes
   const isOffline = React.useMemo(() => {
     if (!status?.waktu_iso) return false;
-    const normalizedIso = status.waktu_iso.replace(' ', 'T');
-    const date = new Date(normalizedIso);
+    let cleanIso = status.waktu_iso.replace(' ', 'T');
+    if (cleanIso.includes('+')) cleanIso = cleanIso.split('+')[0];
+    if (cleanIso.endsWith('Z')) cleanIso = cleanIso.slice(0, -1);
+    
+    const date = new Date(cleanIso);
     const diffInSeconds = (new Date().getTime() - date.getTime()) / 1000;
     return diffInSeconds > 120;
   }, [status?.waktu_iso, status?.waktu_update]); // dependency on waktu_update string ensures it re-evaluates on each poll

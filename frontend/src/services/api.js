@@ -3,11 +3,14 @@ import { supabase } from './supabase';
 // Helper untuk format waktu lengkap (Riwayat)
 const formatWaktu = (isoString) => {
   if (!isoString || isoString === '-') return '-';
-  // Jika database sudah mengirimkan waktu lokal tanpa timezone, 
-  // new Date(isoString) akan menganggapnya waktu lokal browser secara default.
-  // Tapi pastikan aman untuk cross-browser format:
-  const normalizedIso = isoString.replace(' ', 'T');
-  const date = new Date(normalizedIso);
+  // Supabase mengembalikan waktu seperti '2026-05-24T01:31:06+00:00' atau '...Z'.
+  // Karena backend memasukkan naive datetime.now() yang sudah merupakan waktu lokal,
+  // kita harus membuang info zona waktu (Z atau +...) agar JS tidak menambahkan +7 jam lagi.
+  let cleanIso = isoString.replace(' ', 'T');
+  if (cleanIso.includes('+')) cleanIso = cleanIso.split('+')[0];
+  if (cleanIso.endsWith('Z')) cleanIso = cleanIso.slice(0, -1);
+  
+  const date = new Date(cleanIso);
   
   return new Intl.DateTimeFormat('id-ID', {
     year: 'numeric',
