@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Activity } from 'lucide-react';
 
-const Header = ({ isFetching, cuaca }) => {
+const Header = ({ isFetching, cuaca, isOffline }) => {
   const isDark = cuaca?.toLowerCase() === 'hujan';
   
   return (
@@ -17,16 +17,20 @@ const Header = ({ isFetching, cuaca }) => {
           </p>
         </div>
         
-        {/* Live Heartbeat Indicator */}
+        {/* Live / Offline Heartbeat Indicator */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <div className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-            {isFetching && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 ${isFetching ? 'bg-green-500' : 'bg-emerald-500'}`}></span>
+            {isFetching && !isOffline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 ${isOffline ? 'bg-red-500' : (isFetching ? 'bg-green-500' : 'bg-emerald-500')}`}></span>
           </div>
           <span className={`text-[10px] sm:text-xs font-bold tracking-wider uppercase ${isDark ? 'text-white' : 'text-gray-700'}`}>
-            {isFetching ? (
+            {isOffline ? (
+              <span className="text-red-500 flex items-center gap-1">OFFLINE</span>
+            ) : isFetching ? (
               <span className="flex items-center gap-1"><Activity className="w-3 h-3 animate-pulse" /> Syncing...</span>
-            ) : 'Live'}
+            ) : (
+              'Live'
+            )}
           </span>
         </div>
       </div>

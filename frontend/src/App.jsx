@@ -121,6 +121,15 @@ function App() {
 
   const bgClass = getBackgroundClass(status?.cuaca);
 
+  // Arduino Watchdog: Offline if no update for 2 minutes
+  const isOffline = React.useMemo(() => {
+    if (!status?.waktu_iso) return false;
+    const hasTimezone = status.waktu_iso.includes('Z') || status.waktu_iso.includes('+');
+    const date = new Date(hasTimezone ? status.waktu_iso : `${status.waktu_iso}Z`);
+    const diffInSeconds = (new Date().getTime() - date.getTime()) / 1000;
+    return diffInSeconds > 120;
+  }, [status?.waktu_iso, status?.waktu_update]); // dependency on waktu_update string ensures it re-evaluates on each poll
+
   return (
     <div className={`min-h-screen font-sans pb-8 sm:pb-12 transition-colors duration-1000 ${bgClass} relative overflow-hidden`}>
       {/* Dynamic Weather Background Animations */}
@@ -145,7 +154,7 @@ function App() {
       <Toaster position="top-right" />
       
       <div className="relative z-10">
-        <Header isFetching={isFetching} cuaca={status?.cuaca} />
+        <Header isFetching={isFetching} cuaca={status?.cuaca} isOffline={isOffline} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
         {error && (

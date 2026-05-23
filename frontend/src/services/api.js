@@ -1,9 +1,16 @@
 import { supabase } from './supabase';
 
-// Helper untuk format waktu sesuai dengan Timezone otomatis dari Browser/Perangkat
+// Helper untuk memastikan string dibaca sebagai UTC jika tidak ada timezone info
+const parseDate = (isoString) => {
+  if (!isoString) return new Date();
+  const hasTimezone = isoString.includes('Z') || isoString.includes('+');
+  return new Date(hasTimezone ? isoString : `${isoString}Z`);
+};
+
+// Helper untuk format waktu lengkap (Riwayat)
 const formatWaktu = (isoString) => {
   if (!isoString || isoString === '-') return '-';
-  const date = new Date(isoString);
+  const date = parseDate(isoString);
   return new Intl.DateTimeFormat('id-ID', {
     year: 'numeric',
     month: 'short',
@@ -13,6 +20,19 @@ const formatWaktu = (isoString) => {
     second: '2-digit',
     timeZoneName: 'short'
   }).format(date);
+};
+
+// Helper untuk format waktu relatif (Baru saja, 2 menit yang lalu)
+export const formatWaktuRelatif = (isoString) => {
+  if (!isoString || isoString === '-') return '-';
+  const date = parseDate(isoString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'Baru saja';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit yang lalu`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam yang lalu`;
+  return `${Math.floor(diffInSeconds / 86400)} hari yang lalu`;
 };
 
 // ─── Dashboard Endpoints ───────────────
@@ -42,7 +62,8 @@ export const fetchStatus = async () => {
     cuaca: statusCuaca.nama_kondisi || '-',
     warna: statusCuaca.kode_warna || 'Abu-abu',
     pesan_peringatan: pesan,
-    waktu_update: formatWaktu(data.waktu_kejadian),
+    waktu_update: formatWaktuRelatif(data.waktu_kejadian),
+    waktu_iso: data.waktu_kejadian,
     nilai_sensor: data.nilai_analog_sensor || 0,
   };
 };
