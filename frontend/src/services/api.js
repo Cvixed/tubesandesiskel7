@@ -1,16 +1,14 @@
 import { supabase } from './supabase';
 
-// Helper untuk memastikan string dibaca sebagai UTC jika tidak ada timezone info
-const parseDate = (isoString) => {
-  if (!isoString) return new Date();
-  const hasTimezone = isoString.includes('Z') || isoString.includes('+');
-  return new Date(hasTimezone ? isoString : `${isoString}Z`);
-};
-
 // Helper untuk format waktu lengkap (Riwayat)
 const formatWaktu = (isoString) => {
   if (!isoString || isoString === '-') return '-';
-  const date = parseDate(isoString);
+  // Jika database sudah mengirimkan waktu lokal tanpa timezone, 
+  // new Date(isoString) akan menganggapnya waktu lokal browser secara default.
+  // Tapi pastikan aman untuk cross-browser format:
+  const normalizedIso = isoString.replace(' ', 'T');
+  const date = new Date(normalizedIso);
+  
   return new Intl.DateTimeFormat('id-ID', {
     year: 'numeric',
     month: 'short',
@@ -62,7 +60,7 @@ export const fetchStatus = async () => {
     cuaca: statusCuaca.nama_kondisi || '-',
     warna: statusCuaca.kode_warna || 'Abu-abu',
     pesan_peringatan: pesan,
-    waktu_update: formatWaktuRelatif(data.waktu_kejadian),
+    waktu_update: formatWaktu(data.waktu_kejadian),
     waktu_iso: data.waktu_kejadian,
     nilai_sensor: data.nilai_analog_sensor || 0,
   };
