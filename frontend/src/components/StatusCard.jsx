@@ -51,25 +51,60 @@ const StatusCard = ({ status }) => {
     }
   };
 
+  const isDark = cuaca?.toLowerCase() === 'hujan';
+  
+  // Calculate Gauge (Max 1024 for Arduino analog)
+  const sensorValue = status?.nilai_sensor || 0;
+  const radius = 45;
+  const circumference = Math.PI * radius;
+  const percentage = Math.min(100, Math.max(0, (sensorValue / 1024) * 100));
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
   return (
-    <div className={`relative overflow-hidden rounded-3xl shadow-xl transition-all duration-500 p-6 sm:p-8 h-full flex flex-col justify-center ${getBgColor(warna)}`}>
-      <div className="absolute -top-10 -right-10 opacity-20 transform rotate-12 scale-150">
+    <div className={`relative overflow-hidden rounded-3xl transition-all duration-500 p-6 sm:p-8 h-full flex flex-col justify-between group 
+      ${isDark ? 'glass-panel-dark text-white' : 'glass-panel text-slate-800'} 
+      hover:-translate-y-1 hover:shadow-2xl`}>
+      
+      {/* Background Icon Watermark */}
+      <div className="absolute -top-10 -right-10 opacity-10 transform rotate-12 scale-150 transition-transform duration-1000 group-hover:scale-110">
         {getIcon(cuaca)}
       </div>
       
       <div className="relative z-10 flex flex-col items-center text-center">
-        <h2 className="text-base sm:text-xl font-bold uppercase tracking-wider mb-2 opacity-90">Status Cuaca</h2>
-        <div className="text-4xl sm:text-6xl font-extrabold mb-4 sm:mb-6 drop-shadow-md">
+        <h2 className="text-sm sm:text-lg font-bold uppercase tracking-widest mb-1 opacity-80">Status Cuaca</h2>
+        <div className="text-4xl sm:text-6xl font-extrabold mb-6 sm:mb-8 drop-shadow-sm tracking-tight">
           {cuaca?.toUpperCase() || 'UNKNOWN'}
         </div>
-        
-        <div className="bg-white/20 backdrop-blur-md rounded-2xl px-4 sm:px-6 py-3 sm:py-4 w-full max-w-md border border-white/30 shadow-sm">
-          <p className="text-sm sm:text-lg font-semibold mb-1">Peringatan:</p>
-          <p className="text-base sm:text-xl font-bold">{pesan_peringatan}</p>
+
+        {/* Animated Sensor Gauge */}
+        <div className="relative w-48 h-24 sm:w-56 sm:h-28 flex justify-center mb-6">
+          <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+            {/* Background Arch */}
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} strokeWidth="8" strokeLinecap="round" />
+            {/* Animated Arch */}
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke={isDark ? "#60A5FA" : "#F59E0B"} strokeWidth="8" strokeLinecap="round" 
+              strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+              className="transition-all duration-1000 ease-out" />
+            
+            {/* Text inside gauge */}
+            <text x="50" y="45" textAnchor="middle" className={`text-xl sm:text-2xl font-bold fill-current`}>
+              {sensorValue}
+            </text>
+            <text x="50" y="55" textAnchor="middle" className={`text-[8px] sm:text-[10px] uppercase font-semibold fill-current opacity-70`}>
+              Nilai Sensor
+            </text>
+          </svg>
         </div>
         
-        <div className="mt-4 sm:mt-8 text-xs sm:text-sm font-medium opacity-80 flex items-center bg-black/10 px-3 sm:px-4 py-2 rounded-full">
-          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={`rounded-2xl px-4 sm:px-6 py-3 sm:py-4 w-full border backdrop-blur-md
+          ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/50 border-white/50'}`}>
+          <p className="text-xs sm:text-sm font-semibold mb-0.5 opacity-80 uppercase tracking-wider">Peringatan:</p>
+          <p className="text-sm sm:text-lg font-bold">{pesan_peringatan}</p>
+        </div>
+        
+        <div className={`mt-6 text-[10px] sm:text-xs font-medium px-4 py-2 rounded-full inline-flex items-center
+          ${isDark ? 'bg-black/20' : 'bg-black/5 text-slate-600'}`}>
+          <svg className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span className="truncate">Update: {waktu_update}</span>

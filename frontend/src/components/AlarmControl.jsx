@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { sendAlarmCommand } from '../services/api';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 
-const AlarmControl = () => {
+const AlarmControl = ({ cuaca }) => {
   const [loading, setLoading] = useState(false);
   const [lastAction, setLastAction] = useState(null); // 'on' or 'off'
+  const isDark = cuaca?.toLowerCase() === 'hujan';
 
   const handleCommand = async (cmd) => {
     setLoading(true);
@@ -21,17 +22,18 @@ const AlarmControl = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+    <div className={`rounded-3xl p-6 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl ${isDark ? 'glass-panel-dark text-white' : 'glass-panel text-slate-800'}`}>
       <div className="mb-4">
-        <h3 className="text-lg font-bold text-slate-800">Kontrol Buzzer</h3>
-        <p className="text-sm text-slate-500">Nyalakan atau matikan buzzer di Arduino dari jarak jauh</p>
+        <h3 className="text-lg font-bold">Kontrol Buzzer</h3>
+        <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-500'}`}>Nyalakan atau matikan buzzer di Arduino dari jarak jauh</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={() => handleCommand('ALARM_ON')}
           disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100
+            ${isDark ? 'bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30' : 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200'}`}
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bell className="w-5 h-5" />}
           Nyalakan Buzzer
@@ -40,7 +42,8 @@ const AlarmControl = () => {
         <button
           onClick={() => handleCommand('ALARM_OFF')}
           disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 py-3 px-4 rounded-xl font-semibold transition-colors disabled:opacity-50"
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100
+            ${isDark ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'}`}
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BellOff className="w-5 h-5" />}
           Matikan Buzzer

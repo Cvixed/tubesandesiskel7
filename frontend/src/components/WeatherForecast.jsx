@@ -108,7 +108,7 @@ const WeatherForecast = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-3xl shadow-lg p-4 sm:p-6 text-white h-full flex flex-col justify-between">
+    <div className="glass-panel-dark rounded-3xl p-4 sm:p-6 text-white h-full flex flex-col justify-between hover:-translate-y-1 hover:shadow-2xl transition-all duration-500 group">
       <div>
         <div className="flex justify-between items-start mb-4 sm:mb-6">
           <div>

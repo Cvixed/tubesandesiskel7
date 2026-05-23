@@ -1,5 +1,48 @@
 @import "tailwindcss";
 
+/* 
+  Sistem Monitoring Jemuran - Custom CSS
+  Added for Dynamic UI & Animations
+*/
+
+@theme {
+  --animate-raindrop: raindrop 1s linear infinite;
+  --animate-sun-rays: sunRays 10s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes raindrop {
+  0% { transform: translateY(-20px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes sunRays {
+  0% { transform: rotate(0deg) scale(1); opacity: 0.8; }
+  50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.8; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  @apply bg-white/30 backdrop-blur-md border border-white/40 shadow-xl;
+}
+.glass-panel-dark {
+  @apply bg-black/30 backdrop-blur-md border border-white/10 shadow-xl;
+}
+
+/* Base Body Styles for Smooth Transition */
+body {
+  @apply transition-colors duration-1000 ease-in-out;
+}
+
 @layer base {
   body {
     background-color: #f9fafb;

@@ -4,9 +4,9 @@ import StatusCard from './components/StatusCard';
 import HistoryTable from './components/HistoryTable';
 import WeatherForecast from './components/WeatherForecast';
 import AlarmControl from './components/AlarmControl';
-
 import HistoryChart from './components/HistoryChart';
 import { fetchStatus, fetchHistory } from './services/api';
+import { Toaster, toast } from 'react-hot-toast';
 
 // Helper for Audio Alert (Web Audio API)
 const playBeep = () => {
@@ -42,6 +42,7 @@ function App() {
   const [status, setStatus] = useState(null);
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
+  const [isFetching, setIsFetching] = useState(false);
   const previousStatusRef = useRef(null);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ function App() {
     }
 
     const loadData = async () => {
+      setIsFetching(true);
       try {
         const statusData = await fetchStatus();
         setStatus(statusData);
@@ -60,19 +62,29 @@ function App() {
         
         setError(null);
 
-        // Logic Notifikasi Hujan Baru
-        if (statusData && previousStatusRef.current) {
-          if (previousStatusRef.current !== 'Hujan' && statusData.cuaca === 'Hujan') {
-            // Mainkan Suara
+        // Logic Notifikasi Perubahan Cuaca
+        if (statusData && previousStatusRef.current && statusData.cuaca !== previousStatusRef.current) {
+          if (statusData.cuaca?.toLowerCase() === 'hujan') {
             playBeep();
-            
-            // Tampilkan Browser Notification
+            toast.error('Hujan terdeteksi! Segera angkat jemuran Anda sekarang.', {
+              duration: 8000,
+              icon: '🌧️',
+              style: { borderRadius: '10px', background: '#333', color: '#fff' }
+            });
             if (Notification.permission === 'granted') {
-              new Notification('Peringatan Jemuran!', {
-                body: 'Hujan terdeteksi! Segera angkat jemuran Anda sekarang.',
-                icon: 'https://cdn-icons-png.flaticon.com/512/1163/1163624.png' // Icon awan hujan
-              });
+              new Notification('Peringatan Jemuran!', { body: 'Hujan terdeteksi! Segera angkat jemuran.', icon: 'https://cdn-icons-png.flaticon.com/512/1163/1163624.png' });
             }
+          } else if (statusData.cuaca?.toLowerCase() === 'cerah') {
+            toast.success('Cuaca kembali cerah. Aman untuk menjemur.', {
+              duration: 5000,
+              icon: '☀️',
+              style: { borderRadius: '10px', background: '#fff', color: '#333' }
+            });
+          } else if (statusData.cuaca?.toLowerCase() === 'gerimis') {
+            toast('Gerimis mulai turun. Waspada!', {
+              duration: 6000,
+              icon: '🌦️',
+            });
           }
         }
         previousStatusRef.current = statusData?.cuaca;
@@ -80,6 +92,8 @@ function App() {
       } catch (err) {
         console.error('Failed to fetch data:', err);
         setError('Gagal mengambil data dari database. Periksa koneksi internet Anda.');
+      } finally {
+        setIsFetching(false);
       }
     };
 
@@ -93,9 +107,35 @@ function App() {
     return () => clearInterval(intervalId);
   }, []);
 
+  const getBgClass = (cuaca) => {
+    switch (cuaca?.toLowerCase()) {
+      case 'cerah': return 'bg-gradient-to-br from-amber-100 to-orange-200';
+      case 'gerimis': return 'bg-gradient-to-br from-blue-100 to-slate-300';
+      case 'hujan': return 'bg-gradient-to-br from-slate-700 to-slate-900 text-white';
+      default: return 'bg-gray-50';
+    }
+  };
+
+  const bgClass = getBgClass(status?.cuaca);
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pb-8 sm:pb-12">
-      <Header />
+    <div className={`min-h-screen font-sans pb-8 sm:pb-12 transition-colors duration-1000 ${bgClass} relative overflow-hidden`}>
+      {/* Dynamic Weather Background Animations */}
+      {status?.cuaca?.toLowerCase() === 'hujan' && (
+        <div className="absolute inset-0 pointer-events-none opacity-30">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={i} className="absolute w-0.5 h-10 bg-blue-300 animate-raindrop" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 1}s`, animationDuration: `${0.5 + Math.random() * 0.5}s` }} />
+          ))}
+        </div>
+      )}
+      {status?.cuaca?.toLowerCase() === 'cerah' && (
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-yellow-400 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse pointer-events-none" />
+      )}
+
+      <Toaster position="top-right" />
+      
+      <div className="relative z-10">
+        <Header isFetching={isFetching} cuaca={status?.cuaca} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
         {error && (
@@ -122,19 +162,20 @@ function App() {
         {/* Middle Grid: Mock & Alarm Control */}
         <div className="mb-8 grid grid-cols-1 gap-6">
 
-          <AlarmControl />
+          <AlarmControl cuaca={status?.cuaca} />
         </div>
         
         {/* Chart Section */}
         <div className="mb-8">
-          <HistoryChart history={history} />
+          <HistoryChart history={history} cuaca={status?.cuaca} />
         </div>
 
         {/* Table Section */}
         <div>
-          <HistoryTable history={history} />
+          <HistoryTable history={history} cuaca={status?.cuaca} />
         </div>
       </main>
+      </div>
     </div>
   );
 }
