@@ -11,16 +11,12 @@ const StatusCard = ({ status }) => {
 
   const { cuaca, warna, pesan_peringatan, waktu_update } = status;
 
-  const getBgColor = (warna) => {
+  const getGaugeColor = (warna) => {
     switch (warna?.toLowerCase()) {
-      case 'hijau':
-        return 'bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-green-200';
-      case 'kuning':
-        return 'bg-gradient-to-br from-yellow-300 to-amber-500 text-slate-800 shadow-yellow-100';
-      case 'merah':
-        return 'bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-red-200';
-      default:
-        return 'bg-gray-200 text-gray-800';
+      case 'hijau': return '#10B981'; // emerald-500
+      case 'kuning': return '#F59E0B'; // amber-500
+      case 'merah': return '#EF4444'; // red-500
+      default: return '#60A5FA';
     }
   };
 
@@ -82,7 +78,7 @@ const StatusCard = ({ status }) => {
             {/* Background Arch */}
             <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} strokeWidth="8" strokeLinecap="round" />
             {/* Animated Arch */}
-            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke={isDark ? "#60A5FA" : "#F59E0B"} strokeWidth="8" strokeLinecap="round" 
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke={getGaugeColor(warna)} strokeWidth="8" strokeLinecap="round" 
               strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
               className="transition-all duration-1000 ease-out" />
             

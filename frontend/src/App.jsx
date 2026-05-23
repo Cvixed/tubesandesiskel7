@@ -107,29 +107,39 @@ function App() {
     return () => clearInterval(intervalId);
   }, []);
 
-  const getBgClass = (cuaca) => {
+  const getBackgroundClass = (cuaca) => {
     switch (cuaca?.toLowerCase()) {
-      case 'cerah': return 'bg-gradient-to-br from-amber-100 to-orange-200';
-      case 'gerimis': return 'bg-gradient-to-br from-blue-100 to-slate-300';
-      case 'hujan': return 'bg-gradient-to-br from-slate-700 to-slate-900 text-white';
-      default: return 'bg-gray-50';
+      case 'hujan':
+        return 'bg-gradient-to-br from-red-900 to-rose-950 text-white'; // Merah (Gelap)
+      case 'gerimis':
+        return 'bg-gradient-to-br from-amber-100 to-yellow-200 text-slate-800'; // Kuning (Terang)
+      case 'cerah':
+      default:
+        return 'bg-gradient-to-br from-green-100 to-emerald-200 text-slate-800'; // Hijau (Terang)
     }
   };
 
-  const bgClass = getBgClass(status?.cuaca);
+  const bgClass = getBackgroundClass(status?.cuaca);
 
   return (
     <div className={`min-h-screen font-sans pb-8 sm:pb-12 transition-colors duration-1000 ${bgClass} relative overflow-hidden`}>
       {/* Dynamic Weather Background Animations */}
       {status?.cuaca?.toLowerCase() === 'hujan' && (
-        <div className="absolute inset-0 pointer-events-none opacity-30">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="absolute w-0.5 h-10 bg-blue-300 animate-raindrop" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 1}s`, animationDuration: `${0.5 + Math.random() * 0.5}s` }} />
+        <div className="absolute inset-0 pointer-events-none opacity-40">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <div key={i} className="absolute w-0.5 h-12 bg-red-200/50 animate-raindrop" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 1}s`, animationDuration: `${0.4 + Math.random() * 0.4}s` }} />
+          ))}
+        </div>
+      )}
+      {status?.cuaca?.toLowerCase() === 'gerimis' && (
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div key={`drizzle-${i}`} className="absolute w-0.5 h-6 bg-slate-400 animate-raindrop" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 2}s`, animationDuration: `${0.6 + Math.random() * 0.6}s` }} />
           ))}
         </div>
       )}
       {status?.cuaca?.toLowerCase() === 'cerah' && (
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-yellow-400 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse pointer-events-none" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse pointer-events-none" />
       )}
 
       <Toaster position="top-right" />
@@ -156,7 +166,7 @@ function App() {
         {/* Top Grid: Status Card & Weather Forecast */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <StatusCard status={status} />
-          <WeatherForecast />
+          <WeatherForecast cuaca={status?.cuaca} />
         </div>
 
         {/* Middle Grid: Mock & Alarm Control */}
