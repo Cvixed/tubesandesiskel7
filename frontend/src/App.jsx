@@ -107,15 +107,29 @@ function App() {
     return () => clearInterval(intervalId);
   }, []);
 
+  const [isNightMode, setIsNightMode] = useState(() => {
+    return localStorage.getItem('nightMode') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('nightMode', isNightMode);
+  }, [isNightMode]);
+
   const getBackgroundClass = (cuaca) => {
     switch (cuaca?.toLowerCase()) {
       case 'hujan':
-        return 'bg-gradient-to-br from-red-900 to-rose-950 text-white'; // Merah (Gelap)
+        return isNightMode 
+          ? 'bg-gradient-to-br from-slate-900 to-red-950 text-white' 
+          : 'bg-gradient-to-br from-red-900 to-rose-950 text-white';
       case 'gerimis':
-        return 'bg-gradient-to-br from-amber-100 to-yellow-200 text-slate-800'; // Kuning (Terang)
+        return isNightMode
+          ? 'bg-gradient-to-br from-slate-800 to-amber-900 text-slate-100'
+          : 'bg-gradient-to-br from-amber-100 to-yellow-200 text-slate-800';
       case 'cerah':
       default:
-        return 'bg-gradient-to-br from-green-100 to-emerald-200 text-slate-800'; // Hijau (Terang)
+        return isNightMode
+          ? 'bg-gradient-to-br from-slate-900 to-emerald-950 text-slate-100'
+          : 'bg-gradient-to-br from-green-100 to-emerald-200 text-slate-800';
     }
   };
 
@@ -157,7 +171,7 @@ function App() {
       <Toaster position="top-right" />
       
       <div className="relative z-10">
-        <Header isFetching={isFetching} cuaca={status?.cuaca} isOffline={isOffline} />
+        <Header isFetching={isFetching} cuaca={status?.cuaca} isOffline={isOffline} isNightMode={isNightMode} setIsNightMode={setIsNightMode} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
         {error && (
@@ -177,24 +191,24 @@ function App() {
         
         {/* Top Grid: Status Card & Weather Forecast */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <StatusCard status={status} />
-          <WeatherForecast cuaca={status?.cuaca} />
+          <StatusCard status={status} isNightMode={isNightMode} />
+          <WeatherForecast cuaca={status?.cuaca} isNightMode={isNightMode} />
         </div>
 
         {/* Middle Grid: Mock & Alarm Control */}
         <div className="mb-8 grid grid-cols-1 gap-6">
 
-          <AlarmControl cuaca={status?.cuaca} />
+          <AlarmControl cuaca={status?.cuaca} isNightMode={isNightMode} />
         </div>
         
         {/* Chart Section */}
         <div className="mb-8">
-          <HistoryChart history={history} cuaca={status?.cuaca} />
+          <HistoryChart history={history} cuaca={status?.cuaca} isNightMode={isNightMode} />
         </div>
 
         {/* Table Section */}
         <div>
-          <HistoryTable history={history} cuaca={status?.cuaca} />
+          <HistoryTable history={history} cuaca={status?.cuaca} isNightMode={isNightMode} />
         </div>
       </main>
       </div>

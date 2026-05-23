@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { Activity } from 'lucide-react';
+import { Activity, Moon, Sun } from 'lucide-react';
 
-const Header = ({ isFetching, cuaca, isOffline }) => {
-  const isDark = cuaca?.toLowerCase() === 'hujan';
+const Header = ({ isFetching, cuaca, isOffline, isNightMode, setIsNightMode }) => {
+  const isDark = isNightMode || cuaca?.toLowerCase() === 'hujan';
   
   return (
     <header className={`backdrop-blur-md border-b mb-6 sm:mb-8 sticky top-0 z-50 transition-colors duration-1000 ${isDark ? 'bg-black/20 border-white/10' : 'bg-white/40 border-white/40 shadow-sm'}`}>
@@ -17,7 +17,17 @@ const Header = ({ isFetching, cuaca, isOffline }) => {
           </p>
         </div>
         
-        {/* Live / Offline Heartbeat Indicator */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Night Mode Toggle */}
+          <button 
+            onClick={() => setIsNightMode(!isNightMode)}
+            className={`p-1.5 sm:p-2 rounded-full transition-colors ${isDark ? 'bg-white/10 text-yellow-300 hover:bg-white/20' : 'bg-black/5 text-slate-700 hover:bg-black/10'}`}
+            title="Toggle Night Mode"
+          >
+            {isNightMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
+          </button>
+
+          {/* Live / Offline Heartbeat Indicator */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <div className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
             {isFetching && !isOffline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
@@ -32,6 +42,7 @@ const Header = ({ isFetching, cuaca, isOffline }) => {
               'Live'
             )}
           </span>
+        </div>
         </div>
       </div>
     </header>
