@@ -1,4 +1,4 @@
-<![CDATA[# ☁️ Sistem Monitoring Jemuran Pintar IoT
+# ☁️ Sistem Monitoring Jemuran Pintar IoT
 
 <div align="center">
 
@@ -1060,4 +1060,3 @@ Tugas Besar Mata Kuliah **Arsitektur & Desain Sistem Komputer**
 **⭐ Jika proyek ini membantu, berikan bintang di repository! ⭐**
 
 </div>
-]]>
