@@ -94,7 +94,7 @@ const StatusCard = ({ status, isNightMode }) => {
         
         <div className={`rounded-2xl px-4 sm:px-6 py-3 sm:py-4 w-full border backdrop-blur-md
           ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/50 border-white/50'}`}>
-          <p className="text-xs sm:text-sm font-semibold mb-0.5 opacity-80 uppercase tracking-wider">Peringatan:</p>
+          <p className="text-xs sm:text-sm font-semibold mb-0.5 opacity-80 uppercase tracking-wider">Kondisi Jemuran:</p>
           <p className="text-sm sm:text-lg font-bold">{pesan_peringatan}</p>
         </div>
         
