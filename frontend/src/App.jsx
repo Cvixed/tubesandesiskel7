@@ -5,6 +5,7 @@ import HistoryTable from './components/HistoryTable';
 import WeatherForecast from './components/WeatherForecast';
 import AlarmControl from './components/AlarmControl';
 import HistoryChart from './components/HistoryChart';
+import RainRadarMap from './components/RainRadarMap';
 import { fetchStatus, fetchHistory } from './services/api';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -201,6 +202,9 @@ function App() {
           <AlarmControl cuaca={status?.cuaca} isNightMode={isNightMode} />
         </div>
         
+        {/* Rain Radar Map */}
+        <RainRadarMap cuaca={status?.cuaca} isNightMode={isNightMode} />
+
         {/* Chart Section */}
         <div className="mb-8">
           <HistoryChart history={history} cuaca={status?.cuaca} isNightMode={isNightMode} />
