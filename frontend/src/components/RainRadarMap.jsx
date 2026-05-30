@@ -31,7 +31,7 @@ const FlyToLocation = ({ position }) => {
   const map = useMap();
   useEffect(() => {
     if (position) {
-      map.flyTo(position, 8, { duration: 1.5 });
+      map.flyTo(position, 7, { duration: 1.5 });
     }
   }, [position, map]);
   return null;
@@ -186,7 +186,8 @@ const RainRadarMap = ({ cuaca, isNightMode }) => {
         )}
         <MapContainer
           center={userPosition || defaultCenter}
-          zoom={7}
+          zoom={6}
+          maxZoom={7}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
           attributionControl={false}
@@ -200,6 +201,8 @@ const RainRadarMap = ({ cuaca, isNightMode }) => {
               url={radarTileUrl}
               opacity={0.65}
               zIndex={2}
+              maxNativeZoom={7}
+              maxZoom={7}
               attribution='<a href="https://www.rainviewer.com/">RainViewer</a>'
             />
           )}
