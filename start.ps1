@@ -39,7 +39,7 @@ Write-Host "[OK] Backend berjalan di http://localhost:8000" -ForegroundColor Gre
 Write-Host ""
 
 # === Jalankan Serial Bridge ===
-Write-Host "[2/2] Menjalankan Serial Bridge (Arduino COM6)..." -ForegroundColor Yellow
+Write-Host "[2/2] Menjalankan Serial Bridge (Arduino COM12)..." -ForegroundColor Yellow
 Write-Host "      Tekan Ctrl+C untuk menghentikan" -ForegroundColor Gray
 Write-Host ""
 

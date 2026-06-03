@@ -6,7 +6,7 @@ import sys
 
 # Konfigurasi Port Serial
 # GANTI "COM6" DENGAN PORT ARDUINO ANDA! (Misal: COM3, COM4, dsb)
-SERIAL_PORT = "COM6" 
+SERIAL_PORT = "COM12" 
 BAUD_RATE = 9600
 
 # Konfigurasi Backend URL (Pastikan Backend FastAPI berjalan)
